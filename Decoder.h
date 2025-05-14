@@ -1,7 +1,6 @@
 #ifndef DECODER_H
 #define DECODER_H
 
-#include "Dictionary.h"
 #include <string>
 
 class Decoder {

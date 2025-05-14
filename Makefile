@@ -1,32 +1,49 @@
 PROJECT = shannon
 LIBPROJECT = lib$(PROJECT).a
+TESTPROJECT = test-$(PROJECT)
 
 CXX = g++
 AR = ar
 ARFLAGS = rcs
 
 CXXFLAGS = -I. -std=c++20 -Wall -Wextra -O3 -march=native
-LDFLAGS = -L. -l$(PROJECT)
+LDFLAGS = -L. -l:$(LIBPROJECT)
+LDFLAGS_TEST = $(LDFLAGS) -lgtest -lgtest_main -lpthread
 
-SRC = Encoder.cpp Decoder.cpp Dictionary.cpp
+SRC = Encoder.cpp Decoder.cpp Dictionary.cpp main.cpp
 OBJ = $(SRC:.cpp=.o)
 
-.PHONY: all clean cleanall
+TEST_SRC = tests.cpp
+TEST_OBJ = $(TEST_SRC:.cpp=.o)
 
-all: $(PROJECT)
+DEPS = Encoder.h Decoder.h Dictionary.h
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+MAIN_SRC = main.cpp
+MAIN_OBJ = main.o
 
-$(LIBPROJECT): $(OBJ)
+.PHONY: default all clean cleanall test
+
+default: all
+
+%.o: %.cpp $(DEPS)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
+
+$(LIBPROJECT): Encoder.o Decoder.o Dictionary.o
 	$(AR) $(ARFLAGS) $@ $^
 
-$(PROJECT): main.o $(LIBPROJECT)
-	rm -f stats.log
-	$(CXX) main.o -o $@ $(LDFLAGS)
+$(PROJECT): $(MAIN_OBJ) $(LIBPROJECT)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(TESTPROJECT): $(TEST_OBJ) $(LIBPROJECT)
+	$(CXX) -o $@ $^ $(LDFLAGS_TEST)
+
+test: $(TESTPROJECT)
+	./$(TESTPROJECT)
+
+all: $(PROJECT)
 
 clean:
 	rm -f *.o
 
 cleanall: clean
-	rm -f $(PROJECT) $(LIBPROJECT) stats.log
+	rm -f $(PROJECT) $(LIBPROJECT) $(TESTPROJECT) stats.log
