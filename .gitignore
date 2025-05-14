@@ -11,6 +11,7 @@ Encoder.o
 Dictionary.o 
 main.o 
 stats.log
+test_input.bin
 
 # User-specific files
 *.rsuser

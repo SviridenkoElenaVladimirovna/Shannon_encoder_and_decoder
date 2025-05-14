@@ -1,5 +1,6 @@
 #include "Encoder.h"
 #include "Decoder.h"
+#include "Dictionary.h"
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -23,15 +24,19 @@ int main() {
     decoder.decode(compressed_file, output_file, dict_file);
     std::cout << "Decompression completed\n";
 
+    Dictionary dictionary;
+    dictionary.load_from_file(dict_file);
+    dictionary.print_statistics();
+
     std::ifstream result_in(output_file, std::ios::binary);
     std::string result_data((std::istreambuf_iterator<char>(result_in)),
                             std::istreambuf_iterator<char>());
     result_in.close();
 
     if (result_data == test_data) {
-        std::cout << "successfully\n";
+        std::cout << "Successfully decompressed\n";
     } else {
-        std::cout << "failed: Data mismatch!\n";
+        std::cout << "Failed: Data mismatch!\n";
     }
 
     remove(input_file.c_str());

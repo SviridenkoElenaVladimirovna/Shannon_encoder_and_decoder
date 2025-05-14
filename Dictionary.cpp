@@ -4,6 +4,7 @@
 #include <numeric>
 #include <iomanip>
 #include <bitset>
+#include <iostream>
 
 void Dictionary::analyze_frequencies(const std::string& data) {
     symbol_map.clear();
@@ -14,12 +15,7 @@ void Dictionary::analyze_frequencies(const std::string& data) {
         symbol_map[c].frequency++;
     }
 
-    for (int i = 0; i < 256; ++i) {
-        char c = static_cast<char>(i);
-        if (symbol_map.find(c) == symbol_map.end()) {
-            symbol_map[c] = {1, ""};
-        }
-    }
+    if (symbol_map.empty()) return;
 
     build_shannon_fano_codes();
 }
@@ -30,17 +26,21 @@ void Dictionary::build_shannon_fano_codes() {
         symbols.emplace_back(symbol, info.frequency);
     }
 
+    if (symbols.empty()) return;
+
     std::sort(symbols.begin(), symbols.end(),
               [](const auto& a, const auto& b) { return a.second > b.second; });
 
     build_codes_recursive(symbols, 0, symbols.size() - 1, "");
 }
-
 void Dictionary::build_codes_recursive(const std::vector<std::pair<char, uint32_t>>& symbols,
                                        size_t start, size_t end, const std::string& code) {
+    if (start > end) return;
+
     if (start == end) {
-        symbol_map[symbols[start].first].code = code.empty() ? "0" : code;
-        code_map[code.empty() ? "0" : code] = symbols[start].first;
+        std::string final_code = code.empty() ? "0" : code;
+        symbol_map[symbols[start].first].code = final_code;
+        code_map[final_code] = symbols[start].first;
         return;
     }
 
@@ -137,7 +137,10 @@ std::optional<char> Dictionary::get_symbol(const std::string& code) const {
 
 void Dictionary::print_statistics() const {
     std::ofstream log("stats.log", std::ios::app);
-    if (!log) return;
+    if (!log.is_open()) {
+        std::cerr << "Failed to open stats.log for writing\n";
+        return;
+    }
 
     log << "Dictionary Statistics:\n";
     log << "Total symbols: " << total_symbols << "\n";
@@ -153,4 +156,6 @@ void Dictionary::print_statistics() const {
             << " (" << std::fixed << std::setprecision(2)
             << (100.0 * sorted[i].second.frequency / total_symbols) << "%)\n";
     }
+
+    log.close();
 }
